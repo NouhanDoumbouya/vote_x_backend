@@ -11,7 +11,12 @@ class VoteCreateView(generics.CreateAPIView):
     serializer_class = VoteSerializer
 
     def get_permissions(self):
-        return [IsVoter()]  # Only voters can vote
+        """
+        Allow both authenticated voters and guests to vote.
+        But handle permissions in serializer validation.
+        Whether guest voting is allowed is poll-specific.
+        """
+        return [permissions.AllowAny()]
 
 
 

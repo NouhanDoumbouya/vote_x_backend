@@ -13,6 +13,8 @@ class Poll(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    allow_guest_votes = models.BooleanField(default=True)
+
 
     def __str__(self):
         return self.title

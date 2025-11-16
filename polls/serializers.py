@@ -21,5 +21,6 @@ class PollSerializer(serializers.ModelSerializer):
             "created_at",
             "expires_at",
             "is_active",
+            "allow_guest_votes", # Decide whether to include guest votes
             "options",
         ]
