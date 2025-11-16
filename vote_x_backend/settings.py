@@ -57,6 +57,9 @@ INSTALLED_APPS = [
     'users',
     'polls',
     'votes',
+
+    # Swagger for API documentation
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
