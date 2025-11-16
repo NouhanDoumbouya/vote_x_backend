@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+# Import User model
 User = settings.AUTH_USER_MODEL
 
 class Poll(models.Model):
