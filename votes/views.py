@@ -5,6 +5,7 @@ from polls.models import Poll
 from users.permissions import IsVoter
 from .models import Vote
 from .serializers import VoteSerializer
+from .serializers_results import PollResultsSerializer
 
 
 class VoteCreateView(generics.CreateAPIView):
@@ -22,9 +23,9 @@ class VoteCreateView(generics.CreateAPIView):
 
 class PollResultsView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = PollResultsSerializer   # <-- REQUIRED
 
     def get(self, request, poll_id):
-        # Fetch poll optimized
         poll = (
             Poll.objects
             .select_related("created_by")
@@ -32,19 +33,19 @@ class PollResultsView(generics.GenericAPIView):
             .get(pk=poll_id)
         )
 
-        # Aggregate votes per option
         options = poll.options.annotate(
             vote_count=Count("votes")
         ).values("id", "text", "vote_count")
 
-        # Total votes for this poll
         total_votes = Vote.objects.filter(option__poll=poll).count()
 
-        return Response({
+        data = {
             "poll_id": poll.id,
             "title": poll.title,
-            "description": poll.description,
+            "description": poll.description or "",
             "total_votes": total_votes,
             "options": list(options),
-        })
+        }
+
+        return Response(self.get_serializer(data).data)
 

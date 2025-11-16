@@ -22,6 +22,11 @@ class Poll(models.Model):
     @property
     def is_expired(self):
         return self.expires_at and self.expires_at < timezone.now()
+    
+    @property
+    def is_current(self):
+        return self.is_active and not self.is_expired
+
 
 
 class Option(models.Model):

@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.conf import settings
 from users.models import User
 from polls.models import Poll, Option
 
@@ -6,6 +7,12 @@ class Command(BaseCommand):
     help = "Seed database with initial data"
 
     def handle(self, *args, **kwargs):
+
+        # Skip when running tests
+        if getattr(settings, "TESTING", False):
+            self.stdout.write(self.style.WARNING("Skipping seed during tests."))
+            return
+
         # Create admin
         admin, _ = User.objects.get_or_create(
             email="admin@example.com",

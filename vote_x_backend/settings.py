@@ -85,6 +85,31 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+CORS_ALLOW_ALL_ORIGINS = True   # For development ONLY
+
+# CORS configuration for allowed origins in Frontend-Backend communication
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",    # Vite dev server
+    "http://localhost:3000",    # React dev server
+    "http://127.0.0.1:5173",
+]
+
+# CORS configuration for allowing credentials in cross-origin requests
+CORS_ALLOW_CREDENTIALS = True
+
+#  Allow specific headers in CORS requests in Frontend-Backend communication
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
 
 ROOT_URLCONF = 'vote_x_backend.urls'
 
@@ -214,3 +239,13 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+
+# Custom Authentication Backend
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+
+# Testing settings
+import sys
+TESTING = "test" in sys.argv
