@@ -249,3 +249,19 @@ AUTHENTICATION_BACKENDS = [
 # Testing settings
 import sys
 TESTING = "test" in sys.argv
+
+import os
+
+# ---------------------------
+# CI ENVIRONMENT (GitHub Actions)
+# ---------------------------
+# When running inside GitHub Actions, switch to SQLite for tests.
+if os.environ.get("GITHUB_WORKFLOW"):  
+    print("⚙️ Using SQLite for GitHub Actions CI tests")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",   # fastest possible in-memory DB
+        }
+    }
+

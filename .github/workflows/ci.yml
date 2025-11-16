@@ -10,24 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: votexdb
-          POSTGRES_USER: votex
-          POSTGRES_PASSWORD: votexpassword
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd="pg_isready -U votex"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
-
-      redis:
-        image: redis:7
-        ports: ["6379:6379"]
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,16 +24,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run migrations
-        env:
-          POSTGRES_DB: votexdb
-          POSTGRES_USER: votex
-          POSTGRES_PASSWORD: votexpassword
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-        run: |
-          python manage.py migrate
+      # No migrations needed since SQLite + memory DB handles everything
+      # No Postgres required for tests
 
       - name: Run tests
+        env:
+          GITHUB_WORKFLOW: "true"   # enables SQLite test mode
         run: |
           python manage.py test
