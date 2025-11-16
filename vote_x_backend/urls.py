@@ -6,6 +6,10 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+# Settings imports for static files
+from django.conf import settings
+from django.conf.urls.static import static
+
 # Exception handling imports
 from django.http import JsonResponse
 
@@ -19,7 +23,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="MIT License"),
     ),
     public=True,
-    permission_classes=[permissions.AllowAny],
+    permission_classes=(permissions.AllowAny,)
 )
 
 
@@ -56,5 +60,11 @@ def custom_500(request):
     }, status=500)
 
 # Custom error handlers
-handler404 = "vote_x_backend.urls.custom_404"
-handler500 = "vote_x_backend.urls.custom_500"
+# handler404 = "vote_x_backend.urls.custom_404"
+# handler500 = "vote_x_backend.urls.custom_500"
+
+# Serving static files during development
+urlpatterns += static(
+    settings.STATIC_URL,
+    document_root=settings.STATIC_ROOT
+)
