@@ -1,0 +1,15 @@
+.env
+venv/
+__pycache__/
+*.pyc
+
+# Django stuff
+db.sqlite3
+media/
+staticfiles/
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
