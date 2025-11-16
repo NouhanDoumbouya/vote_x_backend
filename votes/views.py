@@ -15,15 +15,27 @@ class PollResultsView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, poll_id):
-        poll = Poll.objects.get(pk=poll_id)
-        options = poll.options.annotate(vote_count=Count("votes")).values(
-            "id", "text", "vote_count"
+        # Fetch poll optimized
+        poll = (
+            Poll.objects
+            .select_related("created_by")
+            .prefetch_related("options")
+            .get(pk=poll_id)
         )
+
+        # Aggregate votes per option
+        options = poll.options.annotate(
+            vote_count=Count("votes")
+        ).values("id", "text", "vote_count")
+
+        # Total votes for this poll
         total_votes = Vote.objects.filter(option__poll=poll).count()
 
         return Response({
             "poll_id": poll.id,
             "title": poll.title,
+            "description": poll.description,
             "total_votes": total_votes,
             "options": list(options),
         })
+

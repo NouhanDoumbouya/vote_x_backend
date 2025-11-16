@@ -5,6 +5,8 @@ from .models import Poll, Option
 from .serializers import PollSerializer, OptionSerializer
 from users.permissions import IsAdminUserRole
 import django.db.models as models
+from django.db.models import Q
+
 
 class PollListCreateView(generics.ListCreateAPIView):
     serializer_class = PollSerializer
@@ -16,12 +18,29 @@ class PollListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         now = timezone.now()
-        return Poll.objects.filter(is_active=True).filter(
-            models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now)
-        ).order_by("-created_at")
+
+        qs = (
+            Poll.objects
+            .filter(is_active=True)
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+            .select_related("created_by")          # optimization
+            .prefetch_related("options")           # optimization
+            .order_by("-created_at")
+        )
+
+        # simple search filter ?search=...
+        search = self.request.query_params.get("search")
+        if search:
+            qs = qs.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        return qs
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
 
 
 class PollDetailView(generics.RetrieveDestroyAPIView):

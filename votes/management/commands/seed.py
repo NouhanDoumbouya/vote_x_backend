@@ -1,0 +1,43 @@
+from django.core.management.base import BaseCommand
+from users.models import User
+from polls.models import Poll, Option
+
+class Command(BaseCommand):
+    help = "Seed database with initial data"
+
+    def handle(self, *args, **kwargs):
+        # Create admin
+        admin, _ = User.objects.get_or_create(
+            email="admin@example.com",
+            defaults={
+                "username": "admin",
+                "role": "admin",
+            }
+        )
+        admin.set_password("admin123")
+        admin.save()
+
+        # Create voter
+        voter, _ = User.objects.get_or_create(
+            email="voter@example.com",
+            defaults={
+                "username": "voter",
+                "role": "voter",
+            }
+        )
+        voter.set_password("voter123")
+        voter.save()
+
+        # Create a poll
+        poll, _ = Poll.objects.get_or_create(
+            title="Best Programming Language",
+            description="Vote for your favorite language",
+            created_by=admin
+        )
+
+        # Add options
+        options = ["Python", "Rust", "Go", "JavaScript"]
+        for opt in options:
+            Option.objects.get_or_create(poll=poll, text=opt)
+
+        self.stdout.write(self.style.SUCCESS("Database seeded successfully!"))
