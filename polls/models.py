@@ -5,6 +5,7 @@ from django.utils import timezone
 # Import User model
 User = settings.AUTH_USER_MODEL
 
+# Poll model
 class Poll(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
