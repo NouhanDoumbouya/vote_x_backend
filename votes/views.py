@@ -2,13 +2,17 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from django.db.models import Count
 from polls.models import Poll
+from users.permissions import IsVoter
 from .models import Vote
 from .serializers import VoteSerializer
 
 
 class VoteCreateView(generics.CreateAPIView):
     serializer_class = VoteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        return [IsVoter()]  # Only voters can vote
+
 
 
 class PollResultsView(generics.GenericAPIView):
