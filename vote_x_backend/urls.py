@@ -6,6 +6,9 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+# Exception handling imports
+from django.http import JsonResponse
+
 # Swagger schema view
 schema_view = get_schema_view(
     openapi.Info(
@@ -38,3 +41,20 @@ urlpatterns = [
     path("api/redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc-ui"),
     path("api/schema.json", schema_view.without_ui(cache_timeout=0), name="schema-json"),
 ]
+
+
+def custom_404(request, exception=None):
+    return JsonResponse({
+        "success": False,
+        "message": "Resource not found."
+    }, status=404)
+
+def custom_500(request):
+    return JsonResponse({
+        "success": False,
+        "message": "Internal server error."
+    }, status=500)
+
+# Custom error handlers
+handler404 = "vote_x_backend.urls.custom_404"
+handler500 = "vote_x_backend.urls.custom_500"
