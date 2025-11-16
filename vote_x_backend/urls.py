@@ -10,4 +10,7 @@ urlpatterns = [
 
     # Polls management
     path("api/polls/", include("polls.urls")),
+
+    # Voting management
+    path("api/votes/", include("votes.urls")),
 ]
