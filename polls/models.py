@@ -11,30 +11,17 @@ class Poll(models.Model):
         ("restricted", "Restricted"),
     ]
 
-    CATEGORY_CHOICES = [
-        ("general", "General"),
-        ("technology", "Technology"),
-        ("education", "Education"),
-        ("events", "Events"),
-        ("sports", "Sports"),
-        ("entertainment", "Entertainment"),
-        ("other", "Other"),
-    ]
-
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="polls"
+        related_name="polls",
     )
 
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
-    category = models.CharField(
-        max_length=50,
-        choices=CATEGORY_CHOICES,
-        default="general"
-    )
+    # Optional category for frontend filters
+    category = models.CharField(max_length=100, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
@@ -45,19 +32,21 @@ class Poll(models.Model):
     visibility = models.CharField(
         max_length=20,
         choices=VISIBILITY_CHOICES,
-        default="public"
+        default="public",
     )
 
+    # For restricted polls (only specific users can see/vote)
     allowed_users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="allowed_polls",
-        blank=True
+        blank=True,
     )
 
+    # Stable shareable link ID
     shareable_id = models.CharField(
         max_length=32,
         unique=True,
-        default=lambda: uuid.uuid4().hex
+        default=lambda: uuid.uuid4().hex,
     )
 
     def __str__(self):
@@ -68,3 +57,15 @@ class Poll(models.Model):
         if not self.expires_at:
             return False
         return timezone.now() > self.expires_at
+
+
+class Option(models.Model):
+    poll = models.ForeignKey(
+        Poll,
+        on_delete=models.CASCADE,
+        related_name="options",
+    )
+    text = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.poll.title} - {self.text}"

@@ -1,22 +1,23 @@
+# polls/serializers.py
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Poll, Option
 from votes.models import Vote
 
 
-# -------------------------------------------------------------------
+# ---------------------------------------------------
 # OPTION SERIALIZERS
-# -------------------------------------------------------------------
+# ---------------------------------------------------
 
 class OptionSerializer(serializers.ModelSerializer):
-    """Used for listing poll options without vote counts."""
+    """Simple option without vote counts."""
     class Meta:
         model = Option
         fields = ["id", "text"]
 
 
 class OptionWithVotesSerializer(serializers.ModelSerializer):
-    """Used in poll detail & results pages where votes are required."""
+    """Option including vote count (for list/detail/results)."""
     votes = serializers.SerializerMethodField()
 
     class Meta:
@@ -27,10 +28,9 @@ class OptionWithVotesSerializer(serializers.ModelSerializer):
         return Vote.objects.filter(option=obj).count()
 
 
-
-# -------------------------------------------------------------------
-# POLL LIST SERIALIZER  (Home Page)
-# -------------------------------------------------------------------
+# ---------------------------------------------------
+# POLL LIST SERIALIZER  (Home page)
+# ---------------------------------------------------
 
 class PollListSerializer(serializers.ModelSerializer):
     options = OptionWithVotesSerializer(many=True, read_only=True)
@@ -69,10 +69,9 @@ class PollListSerializer(serializers.ModelSerializer):
         return f"{days}d {hours}h"
 
 
-
-# -------------------------------------------------------------------
+# ---------------------------------------------------
 # POLL DETAIL SERIALIZER
-# -------------------------------------------------------------------
+# ---------------------------------------------------
 
 class PollDetailSerializer(serializers.ModelSerializer):
     options = OptionWithVotesSerializer(many=True, read_only=True)
@@ -112,16 +111,15 @@ class PollDetailSerializer(serializers.ModelSerializer):
         return f"{days}d {hours}h"
 
 
-
-# -------------------------------------------------------------------
+# ---------------------------------------------------
 # POLL CREATE SERIALIZER
-# -------------------------------------------------------------------
+# ---------------------------------------------------
 
 class PollCreateSerializer(serializers.ModelSerializer):
-    # List of option texts from frontend
+    # Frontend sends: ["Python", "Rust", "Go"]
     options = serializers.ListField(
         child=serializers.CharField(),
-        write_only=True
+        write_only=True,
     )
 
     class Meta:
@@ -133,14 +131,13 @@ class PollCreateSerializer(serializers.ModelSerializer):
             "expires_at",
             "visibility",
             "allow_guest_votes",
-            "options",  # custom field (list of strings)
+            "options",
         ]
 
     def create(self, validated_data):
         options_data = validated_data.pop("options")
         poll = Poll.objects.create(**validated_data)
 
-        # Create Option models
         for text in options_data:
             Option.objects.create(poll=poll, text=text)
 

@@ -8,12 +8,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
 
-        # Skip when running tests
+        # Skip during tests
         if getattr(settings, "TESTING", False):
             self.stdout.write(self.style.WARNING("Skipping seed during tests."))
             return
 
-        # Create admin
+        # -------------------------
+        # USERS
+        # -------------------------
         admin, _ = User.objects.get_or_create(
             email="admin@example.com",
             defaults={
@@ -24,7 +26,6 @@ class Command(BaseCommand):
         admin.set_password("admin123")
         admin.save()
 
-        # Create voter
         voter, _ = User.objects.get_or_create(
             email="voter@example.com",
             defaults={
@@ -35,16 +36,24 @@ class Command(BaseCommand):
         voter.set_password("voter123")
         voter.save()
 
-        # Create a poll
+        # -------------------------
+        # POLL
+        # -------------------------
         poll, _ = Poll.objects.get_or_create(
             title="Best Programming Language",
             description="Vote for your favorite language",
-            created_by=admin
+            owner=admin,                      # 🔥 FIXED HERE
+            visibility="public",
+            allow_guest_votes=True,
+            category="Technology"
         )
 
-        # Add options
+        # -------------------------
+        # OPTIONS
+        # -------------------------
         options = ["Python", "Rust", "Go", "JavaScript"]
-        for opt in options:
-            Option.objects.get_or_create(poll=poll, text=opt)
+
+        for text in options:
+            Option.objects.get_or_create(poll=poll, text=text)
 
         self.stdout.write(self.style.SUCCESS("Database seeded successfully!"))
