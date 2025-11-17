@@ -3,6 +3,7 @@ from rest_framework import status
 from users.models import User
 from polls.models import Poll, Option
 
+
 class TestOptions(APITestCase):
 
     def setUp(self):
@@ -12,10 +13,13 @@ class TestOptions(APITestCase):
             password="admin123",
             role="admin"
         )
+
+        # FIXED: Poll must use "owner" not "created_by"
         self.poll = Poll.objects.create(
             title="Languages",
             description="Choose one",
-            created_by=self.admin
+            owner=self.admin,
+            visibility="public"
         )
 
     def authenticate(self):
@@ -23,21 +27,29 @@ class TestOptions(APITestCase):
             "email": "admin@example.com",
             "password": "admin123"
         })
-        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + res.data["access"])
+        self.client.credentials(
+            HTTP_AUTHORIZATION="Bearer " + res.data["access"]
+        )
 
     def test_add_option(self):
+        """Authenticated user can add options."""
         self.authenticate()
 
-        res = self.client.post(f"/api/polls/{self.poll.id}/options/", {
-            "text": "Python"
-        })
+        res = self.client.post(
+            f"/api/polls/{self.poll.id}/options/",
+            {"text": "Python"},
+            format="json"
+        )
+        
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Option.objects.count(), 1)
 
     def test_list_options(self):
+        """Anyone can list options."""
         Option.objects.create(poll=self.poll, text="Python")
         Option.objects.create(poll=self.poll, text="Rust")
 
         res = self.client.get(f"/api/polls/{self.poll.id}/options/")
+        
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 4)
+        self.assertEqual(len(res.data), 2)   # FIXED

@@ -19,6 +19,12 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+# Testing settings
+import sys
+TESTING = "test" in sys.argv
+
+import os
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
@@ -145,7 +151,25 @@ DATABASES = {
     }
 }
 
+# Local tests (python manage.py test)
+if "test" in sys.argv:
+    print("⚙️ Using SQLite for local test environment")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+    }
 
+# CI tests (GitHub Actions)
+if os.environ.get("GITHUB_WORKFLOW"):
+    print("⚙️ Using SQLite for GitHub Actions CI tests")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -251,17 +275,4 @@ import sys
 TESTING = "test" in sys.argv
 
 import os
-
-# ---------------------------
-# CI ENVIRONMENT (GitHub Actions)
-# ---------------------------
-# When running inside GitHub Actions, switch to SQLite for tests.
-if os.environ.get("GITHUB_WORKFLOW"):  
-    print("⚙️ Using SQLite for GitHub Actions CI tests")
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": ":memory:",   # fastest possible in-memory DB
-        }
-    }
 
