@@ -1,20 +1,41 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Poll, Option
+from votes.models import Vote
 
+
+# -------------------------------------------------------------------
+# OPTION SERIALIZERS
+# -------------------------------------------------------------------
 
 class OptionSerializer(serializers.ModelSerializer):
+    """Used for listing poll options without vote counts."""
     class Meta:
         model = Option
         fields = ["id", "text"]
 
 
-class PollSerializer(serializers.ModelSerializer):
-    options = OptionSerializer(many=True, read_only=True)
-    created_by = serializers.ReadOnlyField(source="created_by.id")
-    is_expired = serializers.SerializerMethodField()
-    # FIX: allow expires_at to be null or omitted
-    expires_at = serializers.DateTimeField(required=False, allow_null=True)
+class OptionWithVotesSerializer(serializers.ModelSerializer):
+    """Used in poll detail & results pages where votes are required."""
+    votes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Option
+        fields = ["id", "text", "votes"]
+
+    def get_votes(self, obj):
+        return Vote.objects.filter(option=obj).count()
+
+
+
+# -------------------------------------------------------------------
+# POLL LIST SERIALIZER  (Home Page)
+# -------------------------------------------------------------------
+
+class PollListSerializer(serializers.ModelSerializer):
+    options = OptionWithVotesSerializer(many=True, read_only=True)
+    total_votes = serializers.SerializerMethodField()
+    ends_in = serializers.SerializerMethodField()
 
     class Meta:
         model = Poll
@@ -22,19 +43,105 @@ class PollSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "description",
-            "created_by",
+            "category",
             "created_at",
             "expires_at",
-            "is_active",
-            "allow_guest_votes",
-            "is_expired",
+            "ends_in",
+            "total_votes",
+            "visibility",
+            "shareable_id",
             "options",
         ]
 
-    def get_is_expired(self, obj):
-        return obj.is_expired
+    def get_total_votes(self, obj):
+        return Vote.objects.filter(option__poll=obj).count()
 
-    def validate_expires_at(self, value):
-        if value and value <= timezone.now():
-            raise serializers.ValidationError("Expiration date must be in the future.")
-        return value
+    def get_ends_in(self, obj):
+        if not obj.expires_at:
+            return "No deadline"
+
+        remaining = obj.expires_at - timezone.now()
+        if remaining.total_seconds() <= 0:
+            return "Expired"
+
+        days = remaining.days
+        hours = remaining.seconds // 3600
+        return f"{days}d {hours}h"
+
+
+
+# -------------------------------------------------------------------
+# POLL DETAIL SERIALIZER
+# -------------------------------------------------------------------
+
+class PollDetailSerializer(serializers.ModelSerializer):
+    options = OptionWithVotesSerializer(many=True, read_only=True)
+    total_votes = serializers.SerializerMethodField()
+    ends_in = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Poll
+        fields = [
+            "id",
+            "title",
+            "description",
+            "category",
+            "created_at",
+            "expires_at",
+            "ends_in",
+            "visibility",
+            "allow_guest_votes",
+            "shareable_id",
+            "options",
+            "total_votes",
+        ]
+
+    def get_total_votes(self, obj):
+        return Vote.objects.filter(option__poll=obj).count()
+
+    def get_ends_in(self, obj):
+        if not obj.expires_at:
+            return "No deadline"
+
+        remaining = obj.expires_at - timezone.now()
+        if remaining.total_seconds() <= 0:
+            return "Expired"
+
+        days = remaining.days
+        hours = remaining.seconds // 3600
+        return f"{days}d {hours}h"
+
+
+
+# -------------------------------------------------------------------
+# POLL CREATE SERIALIZER
+# -------------------------------------------------------------------
+
+class PollCreateSerializer(serializers.ModelSerializer):
+    # List of option texts from frontend
+    options = serializers.ListField(
+        child=serializers.CharField(),
+        write_only=True
+    )
+
+    class Meta:
+        model = Poll
+        fields = [
+            "title",
+            "description",
+            "category",
+            "expires_at",
+            "visibility",
+            "allow_guest_votes",
+            "options",  # custom field (list of strings)
+        ]
+
+    def create(self, validated_data):
+        options_data = validated_data.pop("options")
+        poll = Poll.objects.create(**validated_data)
+
+        # Create Option models
+        for text in options_data:
+            Option.objects.create(poll=poll, text=text)
+
+        return poll
