@@ -4,18 +4,16 @@ from .views import (
     PollDetailView,
     OptionListCreateView,
     PollShareLinkView,
+    AllowedUsersView,
+    PollDeleteView,
 )
 
 urlpatterns = [
-    # List + Create polls
     path("", PollListCreateView.as_view(), name="poll-list-create"),
-
-    # Shareable link (must be BEFORE pk route)
-    path("share/<str:share_id>/", PollShareLinkView.as_view(), name="poll-share"),
-
-    # Poll details
     path("<int:pk>/", PollDetailView.as_view(), name="poll-detail"),
+    path("<int:poll_id>/options/", OptionListCreateView.as_view(), name="option-list-create"),
+    path("share/<str:share_id>/", PollShareLinkView.as_view(), name="poll-share-link"),
+    path("<int:poll_id>/allowed-users/", AllowedUsersView.as_view(), name="poll-allowed-users"),
 
-    # Options for a poll
-    path("<int:poll_id>/options/", OptionListCreateView.as_view(), name="poll-options"),
+    path("<int:pk>/delete/", PollDeleteView.as_view(), name="poll-delete"),
 ]

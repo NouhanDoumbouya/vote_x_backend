@@ -3,6 +3,7 @@ from django.utils import timezone
 from core.utils import get_client_ip
 from .models import Vote
 
+
 class VoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vote
@@ -13,11 +14,15 @@ class VoteSerializer(serializers.ModelSerializer):
         option = attrs["option"]
         poll = option.poll
 
-        # Poll must be active
+        # ------------------------------
+        # 1. Ensure poll is active
+        # ------------------------------
         if poll.is_expired:
             raise serializers.ValidationError("This poll has expired.")
 
-        # -------- VISIBILITY RULES ----------
+        # ------------------------------
+        # 2. Poll visibility rules
+        # ------------------------------
         if poll.visibility != "public":
 
             if not request.user.is_authenticated:
@@ -29,36 +34,47 @@ class VoteSerializer(serializers.ModelSerializer):
             if poll.visibility == "restricted" and request.user not in poll.allowed_users.all():
                 raise serializers.ValidationError("You are not allowed to vote here.")
 
-        # -------- GUEST VOTING ----------
+        # ------------------------------
+        # 3. Guest voting
+        # ------------------------------
         if not request.user.is_authenticated:
             if not poll.allow_guest_votes:
                 raise serializers.ValidationError("Guest voting disabled.")
 
-            ip = get_client_ip(request)
-            if Vote.objects.filter(option__poll=poll, guest_ip=ip).exists():
+            guest_ip = get_client_ip(request)
+            # Check guest already voted on THIS POLL (not per option)
+            if Vote.objects.filter(option__poll=poll, guest_ip=guest_ip).exists():
                 raise serializers.ValidationError("Guest already voted.")
 
-            return attrs
+            return attrs  # Guest is allowed
 
-        # -------- USER VOTING ----------
-        if Vote.objects.filter(option__poll=poll, user=request.user).exists():
+        # ------------------------------
+        # 4. Authenticated user voting
+        # ------------------------------
+        user = request.user
+
+        # Check if user voted in THIS POLL already
+        if Vote.objects.filter(option__poll=poll, user=user).exists():
             raise serializers.ValidationError("You already voted.")
 
         return attrs
-
 
     def create(self, validated_data):
         request = self.context["request"]
         option = validated_data["option"]
 
-        # Authenticated user
+        # ------------------------------
+        # Logged-in user
+        # ------------------------------
         if request.user.is_authenticated:
             return Vote.objects.create(
                 user=request.user,
                 option=option
             )
 
-        # Guest user
+        # ------------------------------
+        # Guest
+        # ------------------------------
         guest_ip = get_client_ip(request)
         return Vote.objects.create(
             guest_ip=guest_ip,

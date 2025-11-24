@@ -1,32 +1,34 @@
 from rest_framework.permissions import BasePermission
 
+
 class IsAdmin(BasePermission):
     """Allow only admin users."""
-
     def has_permission(self, request, view):
         return (
             request.user
             and request.user.is_authenticated
-            and request.user.role == "admin"
+            and getattr(request.user, "role", None) == "admin"
         )
 
 
 class IsVoter(BasePermission):
-    """Allow authenticated non-admin (regular voter) users."""
-
+    """Allow authenticated regular (non-admin) voters."""
     def has_permission(self, request, view):
         return (
             request.user
             and request.user.is_authenticated
-            and request.user.role == "voter"
+            and getattr(request.user, "role", None) == "voter"
         )
 
 
 class IsAuthenticatedOrGuest(BasePermission):
     """
-    Allow authenticated users OR allow guests for certain endpoints
-    (future: IP-based guest voting).
-    """
+    Allows:
+    - Authenticated users (admin + voter)
+    - Unauthenticated guests
 
+    Use in views where guest voting is handled in the serializer.
+    """
     def has_permission(self, request, view):
-        return True  # allowed for now (we'll refine later)
+        # Everyone allowed; logic handled elsewhere
+        return True
