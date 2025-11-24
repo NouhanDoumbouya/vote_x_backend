@@ -41,3 +41,19 @@ class ProfileView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+class UserLookupView(APIView):
+    def get(self, request):
+        email = request.query_params.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"exists": False})
+
+        return Response({
+            "exists": True,
+            "id": user.id,
+            "email": user.email,
+            "username": user.username
+        })
