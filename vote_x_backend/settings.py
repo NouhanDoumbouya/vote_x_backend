@@ -9,6 +9,16 @@ import sys
 import dj_database_url
 from dotenv import load_dotenv
 
+# Prevent DATABASE_URL errors during Docker build (collectstatic)
+if os.environ.get("RENDER", None) == "BUILD":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "build.db",
+        }
+    }
+
+
 # -------------------------------------------------------------------
 # Base paths / env
 # -------------------------------------------------------------------

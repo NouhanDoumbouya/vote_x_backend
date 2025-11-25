@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Collect static files (Admin, Swagger, DRF UI)
-RUN python manage.py collectstatic --noinput
+RUN RENDER=BUILD python manage.py collectstatic --noinput
 
 # Expose port
 EXPOSE 8000
