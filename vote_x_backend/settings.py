@@ -252,7 +252,10 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # CSRF (only relevant if you ever use cookies / forms)
-CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS = [
+    "https://vote-x-backend.onrender.com",
+]
+
 if FRONTEND_URL:
     # Ensure https://your-frontend.vercel.app works for CSRF if you ever use cookies
     CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
