@@ -161,8 +161,11 @@ USE_TZ = True
 # Static files (Whitenoise + Render)
 # -------------------------------------------------------------------
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS: list[str] = []
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = []
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_USE_FINDERS = True
+
 
 # Whitenoise storage
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -264,3 +267,6 @@ if FRONTEND_URL:
 # Default primary key field type
 # -------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# LOAD STATIC SWAGGER UI FROM CDN
+STATIC_SWAGGER_UI_DIST_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/"

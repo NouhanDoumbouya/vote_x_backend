@@ -21,12 +21,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the project files
 COPY . .
 
-# Create static files directory
-RUN mkdir -p /app/staticfiles
-
 # Collect static files (Admin, Swagger, DRF UI)
-# || true prevents failures during build
-RUN python manage.py collectstatic --noinput || true
+RUN python manage.py collectstatic --noinput
 
 # Expose port
 EXPOSE 8000
