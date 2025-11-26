@@ -29,6 +29,8 @@ jobs:
 
       - name: Run tests
         env:
-          GITHUB_WORKFLOW: "true"   # enables SQLite test mode
+          GITHUB_WORKFLOW: "true"
+          DATABASE_URL: "sqlite:///:memory:"
         run: |
           python manage.py test
+

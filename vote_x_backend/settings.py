@@ -110,33 +110,22 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "vote_x_backend.wsgi.application"
-
 # -------------------------------------------------------------------
 # Database (Neon via DATABASE_URL)
 # -------------------------------------------------------------------
-# Neon / PostgreSQL requires channel binding tweak for some psycopg builds
+import os
+import dj_database_url
+
 os.environ["PGCHANNELBINDING"] = "disable"
 
-DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True,
-    )
-}
+TESTING = "test" in sys.argv
 
-# Local tests (python manage.py test) – use in-memory SQLite for speed
-if TESTING and not os.environ.get("GITHUB_WORKFLOW"):
-    print("⚙️ Using SQLite for local test environment")
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": ":memory:",
-        }
-    }
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# CI tests (GitHub Actions)
-if os.environ.get("GITHUB_WORKFLOW"):
+# -------------------------------------------------------------------
+# CI TESTS — use SQLite (GitHub Actions)
+# -------------------------------------------------------------------
+if os.getenv("GITHUB_WORKFLOW"):
     print("⚙️ Using SQLite for GitHub Actions CI tests")
     DATABASES = {
         "default": {
@@ -144,6 +133,31 @@ if os.environ.get("GITHUB_WORKFLOW"):
             "NAME": ":memory:",
         }
     }
+
+# -------------------------------------------------------------------
+# LOCAL TESTS — use SQLite
+# -------------------------------------------------------------------
+elif TESTING:
+    print("⚙️ Using SQLite for local tests")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+    }
+
+# -------------------------------------------------------------------
+# PRODUCTION / DEVELOPMENT — use DATABASE_URL
+# -------------------------------------------------------------------
+else:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+
 
 # -------------------------------------------------------------------
 # Password validation
